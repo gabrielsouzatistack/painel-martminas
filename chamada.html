@@ -1,31 +1,239 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 <head>
-    <title>Sistema de Chamada - Yodeck</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mart Minas - Sistema de Chamada</title>
     <style>
-        /* Design limpo para as TVs da empresa */
-        body { margin: 0; background: #085c00; color: white; font-family: Arial, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        .painel { text-align: center; }
-        .nome { font-size: 10vw; text-transform: uppercase; color: #ff0000; margin: 20px 0; }
-        .setor-label { font-size: 3vw; opacity: 0.7; }
-        .admin-box { position: fixed; bottom: 10px; left: 10px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px; }
+        :root {
+            --martminas-green-dark: #004d2c; 
+            --martminas-red: #e4002b;    
+            --text-light: #ffffff;      
+            --text-secondary: #cccccc;   
+            --border-color: rgba(255, 255, 255, 0.15); 
+        }
+
+        body { 
+            margin: 0; 
+            background: var(--martminas-green-dark); 
+            color: var(--text-light); 
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            overflow: hidden; 
+        }
+
+        .viewport {
+            width: 90%;
+            max-width: 1400px; 
+            text-align: center;
+            border-left: 1px solid var(--border-color);
+            border-right: 1px solid var(--border-color);
+            padding: 20px 40px; 
+        }
+
+        .label-visitante { 
+            font-size: 1.8vw; 
+            letter-spacing: 0.8em; 
+            text-transform: uppercase;
+            color: var(--text-secondary); 
+            margin-bottom: 15px;
+            font-weight: 300;
+        }
+
+        .nome { 
+            font-size: 9vw; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            margin: 20px 0;
+            line-height: 1;
+            color: var(--martminas-red); 
+            text-shadow: 0px 4px 10px rgba(0,0,0,0.3); 
+        }
+
+        .setor-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 25px; 
+            margin-top: 20px;
+        }
+
+        .linha {
+            height: 2px; 
+            width: 60px; 
+            background: var(--text-secondary);
+        }
+
+        .setor-texto { 
+            font-size: 2.5vw; 
+            font-weight: 500; 
+            text-transform: uppercase;
+            letter-spacing: 5px; 
+        }
+
+        /* HISTÓRICO */
+        .historico-container {
+            margin-top: 40px;
+            width: 85%;
+            max-width: 1100px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 25px;
+            text-align: center;
+        }
+
+        .historico-titulo {
+            font-size: 1.1vw;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            letter-spacing: 3px;
+            opacity: 0.7;
+        }
+
+        .historico-lista {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .historico-item {
+            background: rgba(255, 255, 255, 0.07);
+            padding: 15px 25px;
+            border-radius: 12px;
+            min-width: 200px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .historico-item span {
+            display: block;
+            font-size: 1.4vw;
+            font-weight: 700;
+            color: var(--text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .historico-item small {
+            display: block;
+            color: var(--text-secondary);
+            font-size: 0.8vw;
+            margin-top: 5px;
+            text-transform: uppercase;
+        }
+
+        /* Painel Admin */
+        .admin-box { 
+            position: fixed; 
+            bottom: 20px; 
+            left: 50%; 
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.95); 
+            backdrop-filter: blur(10px); 
+            padding: 12px 25px; 
+            border-radius: 50px; 
+            display: flex; 
+            gap: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 1000;
+            align-items: center;
+        }
+
+        .admin-box input, .admin-box select { 
+            background: #222;
+            border: 1px solid #444;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 10px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        .admin-box button { 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 20px; 
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: 0.3s;
+            font-size: 12px;
+        }
+
+        .btn-chamar { background: var(--martminas-red); }
+        .btn-chamar:hover { background: #b30022; }
+
+        .btn-limpar { 
+            background: #444; 
+            border: 1px solid #666 !important;
+        }
+        .btn-limpar:hover { background: #666; }
+
+        .fade-in { animation: fadeIn 0.8s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
 
-    <div class="painel" id="display">
-        <div class="setor-label" id="labelSetor">AGUARDANDO...</div>
+    <div class="viewport" id="content">
+        <div class="label-visitante">Visitante</div>
         <div class="nome" id="nomeCliente">---</div>
+        <div class="setor-wrapper">
+            <div class="linha"></div>
+            <div class="setor-texto" id="labelSetor">Aguardando</div>
+            <div class="linha"></div>
+        </div>
+    </div>
+
+    <div class="historico-container">
+        <div class="historico-titulo">Chamadas Anteriores</div>
+        <ul class="historico-lista" id="listaHistorico"></ul>
     </div>
 
     <div class="admin-box" id="adminPanel">
-        <input type="text" id="inputNome" placeholder="Nome do Cliente">
-        <button onclick="enviarChamada()">CHAMAR</button>
+        <input type="text" id="inputNome" placeholder="Nome do Visitante">
+        
+        <select id="selectSetor">
+            <option value="" disabled selected>Selecione o Setor</option>
+            <option value="Comercial">Comercial</option>
+            <option value="Contabilidade">Contabilidade</option>
+            <option value="Controladoria">Controladoria</option>
+            <option value="Departamento Pessoal">Departamento Pessoal</option>
+            <option value="Engenharia">Engenharia</option>
+            <option value="Financeiro">Financeiro</option>
+            <option value="Fiscal">Fiscal</option>
+            <option value="Gestão de Terceiros">Gestão de Terceiros</option>
+            <option value="Jurídico">Jurídico</option>
+            <option value="Manutenção">Manutenção</option>
+            <option value="Meio Ambiente">Meio Ambiente</option>
+            <option value="Operações">Operações</option>
+            <option value="Prevenção de Perdas">Prevenção de Perdas</option>
+            <option value="Projetos">Projetos</option>
+            <option value="RH">RH</option>
+            <option value="Suprimentos">Suprimentos</option>
+            <option value="T.I">T.I</option>
+            <option value="Treinamento">Treinamento</option>
+        </select>
+
+        <button class="btn-chamar" onclick="enviarChamada()">Chamar</button>
+        <button class="btn-limpar" onclick="limparDados()">Limpar Painel</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, push, query, limitToLast, remove } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDJMLtWc4LqcRXXJyvt5e0h9iJbJ1MmI9k",
@@ -40,49 +248,74 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-
         const params = new URLSearchParams(window.location.search);
-        const meuSetor = params.get('setor') || 'recepcao';
-        const modoTV = params.has('tv');
 
-        document.getElementById('labelSetor').innerText = "SETOR: " + meuSetor.toUpperCase();
-        if (modoTV) { document.getElementById('adminPanel').style.display = 'none'; }
+        if (params.has('tv')) { document.getElementById('adminPanel').style.display = 'none'; }
 
-        // Função para a TV "falar" o nome
-        const falarNome = (nome) => {
+        const falarNome = (nome, setor) => {
             const msg = new SpeechSynthesisUtterance();
-            msg.text = `Atenção, cliente ${nome}, comparecer ao setor ${meuSetor}`;
+            msg.text = `Atenção visitante ${nome}, compareça ao setor ${setor}`;
             msg.lang = 'pt-BR';
+            msg.rate = 0.9; 
             window.speechSynthesis.speak(msg);
         };
 
-        let ultimoNome = "";
-
-        onValue(ref(db, 'chamadas/' + meuSetor), (snapshot) => {
+        onValue(ref(db, 'ultimaChamada'), (snapshot) => {
             const data = snapshot.val();
-            if (data && data.nome && data.nome !== ultimoNome) {
-                document.getElementById('nomeCliente').innerText = data.nome;
-                ultimoNome = data.nome;
-                
-                if (modoTV) {
-                    falarNome(data.nome);
-                    // Limpa a tela após 1 minuto (60000ms)
-                    setTimeout(() => {
-                        document.getElementById('nomeCliente').innerText = "---";
-                        ultimoNome = "";
-                    }, 60000);
-                }
+            const elNome = document.getElementById('nomeCliente');
+            const elSetor = document.getElementById('labelSetor');
+            
+            if (data && data.nome) {
+                elNome.innerText = data.nome;
+                elSetor.innerText = data.setor;
+                const content = document.getElementById('content');
+                content.classList.remove('fade-in');
+                void content.offsetWidth; 
+                content.classList.add('fade-in');
+                if (params.has('tv')) { falarNome(data.nome, data.setor); }
+            } else {
+                elNome.innerText = "---";
+                elSetor.innerText = "Aguardando";
             }
         });
 
+        const historicoRef = query(ref(db, 'historico'), limitToLast(4));
+        onValue(historicoRef, (snapshot) => {
+            const lista = document.getElementById('listaHistorico');
+            lista.innerHTML = "";
+            let itens = [];
+            snapshot.forEach((child) => { itens.push(child.val()); });
+            itens.reverse();
+            const anteriores = itens.slice(1, 4);
+            anteriores.forEach(item => {
+                const li = document.createElement('li');
+                li.className = "historico-item";
+                li.innerHTML = `<span>${item.nome}</span><small>${item.setor}</small>`;
+                lista.appendChild(li);
+            });
+        });
+
         window.enviarChamada = function() {
-            const nomeInput = document.getElementById('inputNome');
-            if(nomeInput.value.trim() !== "") {
-                set(ref(db, 'chamadas/' + meuSetor), { 
-                    nome: nomeInput.value,
-                    timestamp: Date.now() 
-                });
-                nomeInput.value = "";
+            const n = document.getElementById('inputNome');
+            const s = document.getElementById('selectSetor');
+            if(n.value.trim() && s.value) {
+                const dados = { nome: n.value.trim(), setor: s.value, timestamp: Date.now() };
+                set(ref(db, 'ultimaChamada'), dados);
+                push(ref(db, 'historico'), dados);
+                n.value = ""; 
+                s.selectedIndex = 0;
+            } else {
+                alert("Preencha o nome e selecione um setor.");
+            }
+        }
+
+        // NOVA FUNÇÃO: Limpa o banco de dados
+        window.limparDados = function() {
+            if(confirm("Deseja realmente limpar todas as chamadas e o histórico?")) {
+                remove(ref(db, 'ultimaChamada'));
+                remove(ref(db, 'historico'));
             }
         }
     </script>
+</body>
+</html>
