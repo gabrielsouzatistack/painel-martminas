@@ -210,6 +210,7 @@
 </head>
 <body>
 
+    <audio id="somAlerta" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto"></audio>
     <div class="logo-container">
         <img src="https://raw.githubusercontent.com/gabrielsouzatistack/painel-martminas/5b609df1936d4cf033ae56b130315b3b272e20e4/martminas_logo.png" 
              alt="Mart Minas" 
@@ -269,7 +270,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, push, query, limitToFirst, limitToLast, remove, serverTimestamp, get } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, push, query, limitToFirst, limitToLast, remove, serverTimestamp, get, runTransaction } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
     
         const firebaseConfig = {
             apiKey: "AIzaSyDJMLtWc4LqcRXXJyvt5e0h9iJbJ1MmI9k",
@@ -293,10 +294,18 @@
             "Engenharia": "3º Andar", "Financeiro": "3º Andar", "Gestão de Terceiros": "3º Andar", "Jurídico": "3º Andar", "Manutenção": "3º Andar", "Projetos": "3º Andar", "Suprimentos": "3º Andar", "T.I": "3º Andar"
         };
     
-        let processandoFila = false;
+        let localProcessando = false;
         if (isTV) document.getElementById('adminPanel').style.display = 'none';
     
-        // --- SINCRONIZAÇÃO DE TELA (Para todos verem) ---
+        // --- SOM ---
+        const tocarDingDong = () => {
+            if (!isTV) return;
+            const audio = document.getElementById('somAlerta');
+            audio.currentTime = 0;
+            audio.play().catch(() => {});
+        };
+    
+        // --- VISUALIZAÇÃO ---
         onValue(ref(db, 'chamada_ativa'), (snapshot) => {
             const d = snapshot.val();
             const elNome = document.getElementById('nomeCliente');
@@ -311,13 +320,7 @@
                 content.classList.remove('fade-in');
                 void content.offsetWidth;
                 content.classList.add('fade-in');
-                
-                if (isTV) {
-                    window.speechSynthesis.cancel();
-                    const msg = new SpeechSynthesisUtterance(`Atenção visitante ${d.nome}, setor ${d.setor}`);
-                    msg.lang = 'pt-BR';
-                    window.speechSynthesis.speak(msg);
-                }
+                tocarDingDong();
             } else {
                 elNome.innerText = "---";
                 elSetor.innerText = "Aguardando";
@@ -333,71 +336,67 @@
             itens.reverse().forEach(item => {
                 const li = document.createElement('li');
                 li.className = "historico-item";
-                li.innerHTML = `<span>${item.nome}</span><small>${item.setor}</small>`;
+                li.innerHTML = `<span>${item.nome}</span><small>${item.setor} - ${item.andar}</small>`;
                 lista.appendChild(li);
             });
         });
     
-        // --- MOTOR DA FILA (SÓ A TV PROCESSA UM POR UM) ---
-        const processarProximoDaFila = async () => {
-            if (!isTV || processandoFila) return;
+        // --- MOTOR DA FILA COM TRAVA ATÔMICA ---
+        const motorFila = async () => {
+            if (!isTV || localProcessando) return;
     
-            // Busca o primeiro item da fila (o mais antigo)
             const filaRef = query(ref(db, 'fila'), limitToFirst(1));
             const snapshot = await get(filaRef);
     
             if (snapshot.exists()) {
-                processandoFila = true;
-                
-                // Pega os dados do primeiro item
+                localProcessando = true;
                 const id = Object.keys(snapshot.val())[0];
                 const dados = snapshot.val()[id];
     
-                // 1. Remove da fila para ninguém mais processar
-                await remove(ref(db, `fila/${id}`));
+                // TRANSAÇÃO: Tenta remover o item. Se outra aba já removeu, result.committed será falso.
+                const result = await runTransaction(ref(db, `fila/${id}`), (currentData) => {
+                    if (currentData === null) return; // Alguém já removeu
+                    return null; // Remove o item
+                });
     
-                // 2. Define como chamada ativa para todos verem
-                await set(ref(db, 'chamada_ativa'), dados);
+                if (result.committed) {
+                    // Ganhou a corrida: agora exibe
+                    await set(ref(db, 'chamada_ativa'), dados);
     
-                // 3. Aguarda 15 segundos REAIS antes de seguir
-                setTimeout(async () => {
-                    // Move para o histórico
-                    await push(ref(db, 'historico'), dados);
-                    // Limpa a tela principal
-                    await set(ref(db, 'chamada_ativa'), null);
-                    
-                    processandoFila = false;
-                    // Tenta processar o próximo imediatamente
-                    processarProximoDaFila();
-                }, 15000);
+                    setTimeout(async () => {
+                        await push(ref(db, 'historico'), dados);
+                        await set(ref(db, 'chamada_ativa'), null);
+                        localProcessando = false;
+                        motorFila(); // Busca o próximo
+                    }, 15000);
+                } else {
+                    // Perdeu a corrida para outra aba: reseta e tenta o próximo item disponível
+                    localProcessando = false;
+                    motorFila();
+                }
             }
         };
     
-        // A TV vigia a fila: se entrar algo e não estiver processando, ela começa
         if (isTV) {
+            // Monitora a fila para acordar o motor
             onValue(ref(db, 'fila'), () => {
-                processarProximoDaFila();
+                if (!localProcessando) motorFila();
             });
         }
     
-        // --- BOTÃO ADMIN ---
+        // --- BOTÕES ---
         window.enviarChamada = function() {
             const n = document.getElementById('inputNome');
             const s = document.getElementById('selectSetor');
-            
             if (n.value.trim() && s.value) {
-                const dados = {
+                push(ref(db, 'fila'), {
                     nome: n.value.trim().toUpperCase(),
                     setor: s.value,
                     andar: mapaAndares[s.value] || "",
                     timestamp: serverTimestamp()
-                };
-                // Apenas joga na fila. A TV cuidará do tempo.
-                push(ref(db, 'fila'), dados);
+                });
                 n.value = "";
                 s.selectedIndex = 0;
-            } else {
-                alert("Preencha os campos!");
             }
         };
     
