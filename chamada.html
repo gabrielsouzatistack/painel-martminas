@@ -26,13 +26,25 @@
             overflow: hidden; 
         }
 
+        .logo-container {
+            margin-top: -70px;
+            margin-bottom: 80px;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        .logo-img {
+            max-width: 350px;
+            height: auto;
+        }
+
         .viewport {
             width: 90%;
             max-width: 1400px; 
             text-align: center;
             border-left: 1px solid var(--border-color);
             border-right: 1px solid var(--border-color);
-            padding: 20px 40px; 
+            padding: 10px 40px; 
+            margin-top: -100px;
         }
 
         .label-visitante { 
@@ -40,7 +52,7 @@
             letter-spacing: 0.8em; 
             text-transform: uppercase;
             color: var(--text-secondary); 
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             font-weight: 300;
         }
 
@@ -48,7 +60,7 @@
             font-size: 9vw; 
             font-weight: 700; 
             text-transform: uppercase; 
-            margin: 20px 0;
+            margin: 15px 0;
             line-height: 1;
             color: var(--martminas-red); 
             text-shadow: 0px 4px 10px rgba(0,0,0,0.3); 
@@ -59,13 +71,19 @@
             align-items: center;
             justify-content: center;
             gap: 25px; 
-            margin-top: 20px;
+            margin-top: 15px;
         }
 
         .linha {
             height: 2px; 
             width: 60px; 
             background: var(--text-secondary);
+        }
+
+        .setor-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .setor-texto { 
@@ -75,13 +93,25 @@
             letter-spacing: 5px; 
         }
 
+        .andar-texto {
+            font-size: 1.8vw;
+            color: var(--martminas-red);
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-top: 5px;
+            letter-spacing: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 15px;
+            border-radius: 4px;
+        }
+
         /* HISTÓRICO */
         .historico-container {
-            margin-top: 40px;
+            margin-top: 30px;
             width: 85%;
             max-width: 1100px;
             border-top: 1px solid var(--border-color);
-            padding-top: 25px;
+            padding-top: 20px;
             text-align: center;
         }
 
@@ -89,7 +119,7 @@
             font-size: 1.1vw;
             text-transform: uppercase;
             color: var(--text-secondary);
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             letter-spacing: 3px;
             opacity: 0.7;
         }
@@ -171,12 +201,7 @@
 
         .btn-chamar { background: var(--martminas-red); }
         .btn-chamar:hover { background: #b30022; }
-
-        .btn-limpar { 
-            background: #444; 
-            border: 1px solid #666 !important;
-        }
-        .btn-limpar:hover { background: #666; }
+        .btn-limpar { background: #444; border: 1px solid #666 !important; }
 
         .fade-in { animation: fadeIn 0.8s ease-out; }
         @keyframes fadeIn {
@@ -187,12 +212,21 @@
 </head>
 <body>
 
+    <div class="logo-container">
+        <img src="https://raw.githubusercontent.com/gabrielsouzatistack/painel-martminas/5b609df1936d4cf033ae56b130315b3b272e20e4/martminas_logo.png" 
+             alt="Mart Minas" 
+             class="logo-img">
+    </div>
+
     <div class="viewport" id="content">
         <div class="label-visitante">Visitante</div>
         <div class="nome" id="nomeCliente">---</div>
         <div class="setor-wrapper">
             <div class="linha"></div>
-            <div class="setor-texto" id="labelSetor">Aguardando</div>
+            <div class="setor-container">
+                <div class="setor-texto" id="labelSetor">Aguardando</div>
+                <div class="andar-texto" id="labelAndar"></div>
+            </div>
             <div class="linha"></div>
         </div>
     </div>
@@ -204,36 +238,40 @@
 
     <div class="admin-box" id="adminPanel">
         <input type="text" id="inputNome" placeholder="Nome do Visitante">
-        
         <select id="selectSetor">
             <option value="" disabled selected>Selecione o Setor</option>
-            <option value="Comercial">Comercial</option>
-            <option value="Contabilidade">Contabilidade</option>
-            <option value="Controladoria">Controladoria</option>
-            <option value="Departamento Pessoal">Departamento Pessoal</option>
-            <option value="Engenharia">Engenharia</option>
-            <option value="Financeiro">Financeiro</option>
-            <option value="Fiscal">Fiscal</option>
-            <option value="Gestão de Terceiros">Gestão de Terceiros</option>
-            <option value="Jurídico">Jurídico</option>
-            <option value="Manutenção">Manutenção</option>
-            <option value="Meio Ambiente">Meio Ambiente</option>
-            <option value="Operações">Operações</option>
-            <option value="Prevenção de Perdas">Prevenção de Perdas</option>
-            <option value="Projetos">Projetos</option>
-            <option value="RH">RH</option>
-            <option value="Suprimentos">Suprimentos</option>
-            <option value="T.I">T.I</option>
-            <option value="Treinamento">Treinamento</option>
+            <optgroup label="1º Andar">
+                <option value="Operações">Operações</option>
+                <option value="Prevenção de Perdas">Prevenção de Perdas</option>
+            </optgroup>
+            <optgroup label="2º Andar">
+                <option value="Comercial">Comercial</option>
+                <option value="Contabilidade">Contabilidade</option>
+                <option value="Controladoria">Controladoria</option>
+                <option value="Departamento Pessoal">Departamento Pessoal</option>
+                <option value="Fiscal">Fiscal</option>
+                <option value="Meio Ambiente">Meio Ambiente</option>
+                <option value="RH">RH</option>
+                <option value="Treinamento">Treinamento</option>
+            </optgroup>
+            <optgroup label="3º Andar">
+                <option value="Engenharia">Engenharia</option>
+                <option value="Financeiro">Financeiro</option>
+                <option value="Gestão de Terceiros">Gestão de Terceiros</option>
+                <option value="Jurídico">Jurídico</option>
+                <option value="Manutenção">Manutenção</option>
+                <option value="Projetos">Projetos</option>
+                <option value="Suprimentos">Suprimentos</option>
+                <option value="T.I">T.I</option>
+            </optgroup>
         </select>
-
         <button class="btn-chamar" onclick="enviarChamada()">Chamar</button>
         <button class="btn-limpar" onclick="limparDados()">Limpar Painel</button>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, push, query, limitToLast, remove } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, push, query, limitToLast, remove, onChildAdded } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDJMLtWc4LqcRXXJyvt5e0h9iJbJ1MmI9k",
@@ -250,47 +288,89 @@
         const db = getDatabase(app);
         const params = new URLSearchParams(window.location.search);
 
-        if (params.has('tv')) { document.getElementById('adminPanel').style.display = 'none'; }
+        // MAPA DE ANDARES
+        const mapaAndares = {
+            "Operações": "1º Andar", "Prevenção de Perdas": "1º Andar",
+            "Comercial": "2º Andar", "Contabilidade": "2º Andar", "Controladoria": "2º Andar", "Departamento Pessoal": "2º Andar", "Fiscal": "2º Andar", "Meio Ambiente": "2º Andar", "RH": "2º Andar", "Treinamento": "2º Andar",
+            "Engenharia": "3º Andar", "Financeiro": "3º Andar", "Gestão de Terceiros": "3º Andar", "Jurídico": "3º Andar", "Manutenção": "3º Andar", "Projetos": "3º Andar", "Suprimentos": "3º Andar", "T.I": "3º Andar"
+        };
 
-        const falarNome = (nome, setor) => {
+        let filaEspera = [];
+        let processandoFila = false;
+        const TEMPO_EXIBICAO = 15000;
+
+        if (params.has('tv')) { 
+            document.getElementById('adminPanel').style.display = 'none'; 
+        }
+
+        const falarNome = (nome, setor, andar) => {
             const msg = new SpeechSynthesisUtterance();
-            msg.text = `Atenção visitante ${nome}, compareça ao setor ${setor}`;
+            msg.text = `Atenção visitante ${nome}, compareça ao setor ${setor}, no ${andar}`;
             msg.lang = 'pt-BR';
             msg.rate = 0.9; 
             window.speechSynthesis.speak(msg);
         };
 
-        onValue(ref(db, 'ultimaChamada'), (snapshot) => {
-            const data = snapshot.val();
+        const exibirChamadaNaTela = (data) => {
             const elNome = document.getElementById('nomeCliente');
             const elSetor = document.getElementById('labelSetor');
+            const elAndar = document.getElementById('labelAndar');
+            const content = document.getElementById('content');
+
+            elNome.innerText = data.nome;
+            elSetor.innerText = data.setor;
+            elAndar.innerText = data.andar || "";
+
+            content.classList.remove('fade-in');
+            void content.offsetWidth; 
+            content.classList.add('fade-in');
+        };
+
+        const processarProximoDaFila = async () => {
+            if (filaEspera.length === 0 || processandoFila) return;
+
+            processandoFila = true;
+            const chamadaAtual = filaEspera.shift();
+
+            exibirChamadaNaTela(chamadaAtual);
             
-            if (data && data.nome) {
-                elNome.innerText = data.nome;
-                elSetor.innerText = data.setor;
-                const content = document.getElementById('content');
-                content.classList.remove('fade-in');
-                void content.offsetWidth; 
-                content.classList.add('fade-in');
-                if (params.has('tv')) { falarNome(data.nome, data.setor); }
-            } else {
-                elNome.innerText = "---";
-                elSetor.innerText = "Aguardando";
+            if (params.has('tv')) {
+                falarNome(chamadaAtual.nome, chamadaAtual.setor, chamadaAtual.andar);
             }
+
+            setTimeout(() => {
+                if (chamadaAtual.nome !== "---") {
+                    push(ref(db, 'historico'), chamadaAtual);
+                }
+
+                processandoFila = false;
+                
+                if (filaEspera.length > 0) {
+                    processarProximoDaFila();
+                } else {
+                    exibirChamadaNaTela({ nome: "---", setor: "Aguardando", andar: "" });
+                }
+            }, TEMPO_EXIBICAO);
+        };
+
+        onChildAdded(ref(db, 'fila'), (snapshot) => {
+            const data = snapshot.val();
+            filaEspera.push(data);
+            if (!processandoFila) processarProximoDaFila();
+            remove(ref(db, `fila/${snapshot.key}`));
         });
 
-        const historicoRef = query(ref(db, 'historico'), limitToLast(4));
+        const historicoRef = query(ref(db, 'historico'), limitToLast(3));
         onValue(historicoRef, (snapshot) => {
             const lista = document.getElementById('listaHistorico');
             lista.innerHTML = "";
             let itens = [];
             snapshot.forEach((child) => { itens.push(child.val()); });
-            itens.reverse();
-            const anteriores = itens.slice(1, 4);
-            anteriores.forEach(item => {
+            
+            itens.reverse().forEach(item => {
                 const li = document.createElement('li');
                 li.className = "historico-item";
-                li.innerHTML = `<span>${item.nome}</span><small>${item.setor}</small>`;
+                li.innerHTML = `<span>${item.nome}</span><small>${item.setor} - ${item.andar}</small>`;
                 lista.appendChild(li);
             });
         });
@@ -299,9 +379,13 @@
             const n = document.getElementById('inputNome');
             const s = document.getElementById('selectSetor');
             if(n.value.trim() && s.value) {
-                const dados = { nome: n.value.trim(), setor: s.value, timestamp: Date.now() };
-                set(ref(db, 'ultimaChamada'), dados);
-                push(ref(db, 'historico'), dados);
+                const dados = { 
+                    nome: n.value.trim(), 
+                    setor: s.value, 
+                    andar: mapaAndares[s.value],
+                    timestamp: Date.now() 
+                };
+                push(ref(db, 'fila'), dados);
                 n.value = ""; 
                 s.selectedIndex = 0;
             } else {
@@ -309,11 +393,11 @@
             }
         }
 
-        // NOVA FUNÇÃO: Limpa o banco de dados
         window.limparDados = function() {
-            if(confirm("Deseja realmente limpar todas as chamadas e o histórico?")) {
-                remove(ref(db, 'ultimaChamada'));
+            if(confirm("Deseja realmente limpar tudo?")) {
+                remove(ref(db, 'fila'));
                 remove(ref(db, 'historico'));
+                location.reload();
             }
         }
     </script>
