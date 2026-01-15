@@ -105,7 +105,6 @@
             border-radius: 4px;
         }
 
-        /* HISTÓRICO */
         .historico-container {
             margin-top: 30px;
             width: 85%;
@@ -160,7 +159,6 @@
             text-transform: uppercase;
         }
 
-        /* Painel Admin */
         .admin-box { 
             position: fixed; 
             bottom: 20px; 
@@ -271,8 +269,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, push, query, limitToLast, remove, onChildAdded } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
-
+        import { getDatabase, ref, set, onValue, push, query, limitToFirst, limitToLast, remove, serverTimestamp, get } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-database.js";
+    
         const firebaseConfig = {
             apiKey: "AIzaSyDJMLtWc4LqcRXXJyvt5e0h9iJbJ1MmI9k",
             authDomain: "painel-yodeck-empresa.firebaseapp.com",
@@ -283,123 +281,134 @@
             appId: "1:542981867246:web:a5390d90ac06764b7495ff",
             measurementId: "G-TPBSM0ZTBH"
         };
-
+    
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const params = new URLSearchParams(window.location.search);
-
-        // MAPA DE ANDARES
+        const isTV = params.has('tv');
+    
         const mapaAndares = {
             "Operações": "1º Andar", "Prevenção de Perdas": "1º Andar",
             "Comercial": "2º Andar", "Contabilidade": "2º Andar", "Controladoria": "2º Andar", "Departamento Pessoal": "2º Andar", "Fiscal": "2º Andar", "Meio Ambiente": "2º Andar", "RH": "2º Andar", "Treinamento": "2º Andar",
             "Engenharia": "3º Andar", "Financeiro": "3º Andar", "Gestão de Terceiros": "3º Andar", "Jurídico": "3º Andar", "Manutenção": "3º Andar", "Projetos": "3º Andar", "Suprimentos": "3º Andar", "T.I": "3º Andar"
         };
-
-        let filaEspera = [];
+    
         let processandoFila = false;
-        const TEMPO_EXIBICAO = 15000;
-
-        if (params.has('tv')) { 
-            document.getElementById('adminPanel').style.display = 'none'; 
-        }
-
-        const falarNome = (nome, setor, andar) => {
-            const msg = new SpeechSynthesisUtterance();
-            msg.text = `Atenção visitante ${nome}, compareça ao setor ${setor}, no ${andar}`;
-            msg.lang = 'pt-BR';
-            msg.rate = 0.9; 
-            window.speechSynthesis.speak(msg);
-        };
-
-        const exibirChamadaNaTela = (data) => {
+        if (isTV) document.getElementById('adminPanel').style.display = 'none';
+    
+        // --- SINCRONIZAÇÃO DE TELA (Para todos verem) ---
+        onValue(ref(db, 'chamada_ativa'), (snapshot) => {
+            const d = snapshot.val();
             const elNome = document.getElementById('nomeCliente');
             const elSetor = document.getElementById('labelSetor');
             const elAndar = document.getElementById('labelAndar');
             const content = document.getElementById('content');
-
-            elNome.innerText = data.nome;
-            elSetor.innerText = data.setor;
-            elAndar.innerText = data.andar || "";
-
-            content.classList.remove('fade-in');
-            void content.offsetWidth; 
-            content.classList.add('fade-in');
-        };
-
-        const processarProximoDaFila = async () => {
-            if (filaEspera.length === 0 || processandoFila) return;
-
-            processandoFila = true;
-            const chamadaAtual = filaEspera.shift();
-
-            exibirChamadaNaTela(chamadaAtual);
-            
-            if (params.has('tv')) {
-                falarNome(chamadaAtual.nome, chamadaAtual.setor, chamadaAtual.andar);
-            }
-
-            setTimeout(() => {
-                if (chamadaAtual.nome !== "---") {
-                    push(ref(db, 'historico'), chamadaAtual);
-                }
-
-                processandoFila = false;
+    
+            if (d) {
+                elNome.innerText = d.nome;
+                elSetor.innerText = d.setor;
+                elAndar.innerText = d.andar;
+                content.classList.remove('fade-in');
+                void content.offsetWidth;
+                content.classList.add('fade-in');
                 
-                if (filaEspera.length > 0) {
-                    processarProximoDaFila();
-                } else {
-                    exibirChamadaNaTela({ nome: "---", setor: "Aguardando", andar: "" });
+                if (isTV) {
+                    window.speechSynthesis.cancel();
+                    const msg = new SpeechSynthesisUtterance(`Atenção visitante ${d.nome}, setor ${d.setor}`);
+                    msg.lang = 'pt-BR';
+                    window.speechSynthesis.speak(msg);
                 }
-            }, TEMPO_EXIBICAO);
-        };
-
-        onChildAdded(ref(db, 'fila'), (snapshot) => {
-            const data = snapshot.val();
-            filaEspera.push(data);
-            if (!processandoFila) processarProximoDaFila();
-            remove(ref(db, `fila/${snapshot.key}`));
+            } else {
+                elNome.innerText = "---";
+                elSetor.innerText = "Aguardando";
+                elAndar.innerText = "";
+            }
         });
-
-        const historicoRef = query(ref(db, 'historico'), limitToLast(3));
-        onValue(historicoRef, (snapshot) => {
+    
+        onValue(query(ref(db, 'historico'), limitToLast(3)), (snapshot) => {
             const lista = document.getElementById('listaHistorico');
             lista.innerHTML = "";
             let itens = [];
-            snapshot.forEach((child) => { itens.push(child.val()); });
-            
+            snapshot.forEach(c => { itens.push(c.val()); });
             itens.reverse().forEach(item => {
                 const li = document.createElement('li');
                 li.className = "historico-item";
-                li.innerHTML = `<span>${item.nome}</span><small>${item.setor} - ${item.andar}</small>`;
+                li.innerHTML = `<span>${item.nome}</span><small>${item.setor}</small>`;
                 lista.appendChild(li);
             });
         });
-
+    
+        // --- MOTOR DA FILA (SÓ A TV PROCESSA UM POR UM) ---
+        const processarProximoDaFila = async () => {
+            if (!isTV || processandoFila) return;
+    
+            // Busca o primeiro item da fila (o mais antigo)
+            const filaRef = query(ref(db, 'fila'), limitToFirst(1));
+            const snapshot = await get(filaRef);
+    
+            if (snapshot.exists()) {
+                processandoFila = true;
+                
+                // Pega os dados do primeiro item
+                const id = Object.keys(snapshot.val())[0];
+                const dados = snapshot.val()[id];
+    
+                // 1. Remove da fila para ninguém mais processar
+                await remove(ref(db, `fila/${id}`));
+    
+                // 2. Define como chamada ativa para todos verem
+                await set(ref(db, 'chamada_ativa'), dados);
+    
+                // 3. Aguarda 15 segundos REAIS antes de seguir
+                setTimeout(async () => {
+                    // Move para o histórico
+                    await push(ref(db, 'historico'), dados);
+                    // Limpa a tela principal
+                    await set(ref(db, 'chamada_ativa'), null);
+                    
+                    processandoFila = false;
+                    // Tenta processar o próximo imediatamente
+                    processarProximoDaFila();
+                }, 15000);
+            }
+        };
+    
+        // A TV vigia a fila: se entrar algo e não estiver processando, ela começa
+        if (isTV) {
+            onValue(ref(db, 'fila'), () => {
+                processarProximoDaFila();
+            });
+        }
+    
+        // --- BOTÃO ADMIN ---
         window.enviarChamada = function() {
             const n = document.getElementById('inputNome');
             const s = document.getElementById('selectSetor');
-            if(n.value.trim() && s.value) {
-                const dados = { 
-                    nome: n.value.trim(), 
-                    setor: s.value, 
-                    andar: mapaAndares[s.value],
-                    timestamp: Date.now() 
+            
+            if (n.value.trim() && s.value) {
+                const dados = {
+                    nome: n.value.trim().toUpperCase(),
+                    setor: s.value,
+                    andar: mapaAndares[s.value] || "",
+                    timestamp: serverTimestamp()
                 };
+                // Apenas joga na fila. A TV cuidará do tempo.
                 push(ref(db, 'fila'), dados);
-                n.value = ""; 
+                n.value = "";
                 s.selectedIndex = 0;
             } else {
-                alert("Preencha o nome e selecione um setor.");
+                alert("Preencha os campos!");
             }
-        }
-
+        };
+    
         window.limparDados = function() {
-            if(confirm("Deseja realmente limpar tudo?")) {
+            if (confirm("Resetar sistema?")) {
+                set(ref(db, 'chamada_ativa'), null);
                 remove(ref(db, 'fila'));
                 remove(ref(db, 'historico'));
                 location.reload();
             }
-        }
+        };
     </script>
 </body>
 </html>
